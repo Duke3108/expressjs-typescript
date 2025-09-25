@@ -10,6 +10,7 @@ import crypto from "crypto";
 import makeToken from "uniqid";
 import "dotenv/config";
 import addMailJob from "../queues/mail.producer.js";
+import { Op } from "sequelize";
 
 const hashPassword = (password: string) => {
   const salt = brcypt.genSaltSync(10);
@@ -38,28 +39,26 @@ const createPasswordChangeToken = async (user: any) => {
   return resetToken;
 };
 
-export const register = asyncHandler(async (req: any, res: any) => {
+export const register = asyncHandler(async (req, res) => {
   const { email, password, fullname, phone } = req.body;
   if (!email || !password || !fullname || !phone) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
-      mes: "missing inputs",
+      msg: "missing inputs",
     });
+    return;
   }
-  const user = await db.User.findOne({ email });
-  if (user) throw new Error("User has existed");
+  const user = await db.User.findOne({ where: { email } });
+  if (user) throw new Error("Tài khoản đã tồn tại");
   else {
     const token = makeToken();
-    res.cookie(
-      "dataregister",
-      { ...req.body, token },
-      {
-        httpOnly: true,
-        maxAge: 15 * 60 * 1000,
-        sameSite: "lax",
-        secure: false,
-      }
-    );
+    await db.User.create({
+      email,
+      password: hashPassword(password),
+      fullname,
+      phone,
+      registerToken: token,
+    });
     const html = `Nhập token để hoàn tất quá trình đăng ký. 
             Token sẽ hết hạn sau 15 phút. <b>${token}</b>`;
 
@@ -70,24 +69,33 @@ export const register = asyncHandler(async (req: any, res: any) => {
     };
 
     await addMailJob(data);
-    return res.json({
+    res.json({
       success: true,
-      mes: "Kiểm tra email của bạn để hoàn tất quá trình đăng ký",
+      msg: "Kiểm tra email của bạn để hoàn tất quá trình đăng ký",
     });
+    return;
   }
 });
 
-export const login = asyncHandler(async (req: any, res: any) => {
+export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
-      mes: "missing inputs",
+      msg: "Tài khoản hoặc mật khẩu không được để trống",
     });
+    return;
   }
 
-  const response = await db.User.findOne({ email });
-  if (response && (await isCorrectPassword(password, response.password))) {
+  const response = await db.User.findOne({ where: { email } });
+  if (!response) throw new Error("Tài khoản không tồn tại");
+  if (!response.emailVerified)
+    throw new Error("Vui lòng xác minh Email trước khi đăng nhập");
+  if (
+    response &&
+    response.emailVerified &&
+    (await isCorrectPassword(password, response.password))
+  ) {
     //tach password va role
     const { password, role, refreshToken, ...userData } = response;
 
@@ -102,18 +110,20 @@ export const login = asyncHandler(async (req: any, res: any) => {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
+      msg: "Đăng nhập thành công",
       accessToken,
     });
+    return;
   } else {
-    throw new Error("Invalid credentials");
+    throw new Error("Sai mật khẩu");
   }
 });
 
-export const refreshToken = asyncHandler(async (req: any, res: any) => {
+export const refreshToken = asyncHandler(async (req, res) => {
   //lay token tu db
-  const token = req.params;
+  const token = req.body.refreshToken;
   //check token hop le
   jwt.verify(
     token,
@@ -122,27 +132,29 @@ export const refreshToken = asyncHandler(async (req: any, res: any) => {
       if (err)
         return res.status(401).json({
           success: false,
-          mes: "Invalid refresh token",
+          msg: "Token không hợp lệ",
         });
       //check token voi token luu trong db
       const response = await db.User.findOne({
-        id: decode.id,
-        refreshToken: token,
+        where: {
+          id: decode.id,
+          refreshToken: token,
+        },
       });
       return res.status(200).json({
         success: response ? true : false,
         newAccessToken: response
           ? generateAccessToken(response.id, response.role)
-          : "Refresh token invalid",
+          : "Token không hợp lệ",
       });
     }
   );
 });
 
-export const forgotPassword = asyncHandler(async (req: any, res: any) => {
-  const { email } = req.body;
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body.email;
   if (!email) throw new Error("Missing email");
-  const user = await db.User.findOne({ email });
+  const user = await db.User.findOne({ where: { email } });
   if (!user) throw new Error("User not found");
   const resetToken = await createPasswordChangeToken(user);
 
@@ -155,25 +167,28 @@ export const forgotPassword = asyncHandler(async (req: any, res: any) => {
     subject: "Quên mật khẩu",
   };
 
-  const rs = (await addMailJob(data)) as any;
-  return res.status(200).json({
+  const rs = await addMailJob(data);
+  res.status(200).json({
     success: true,
-    mes: rs ? "Vui lòng kiểm tra email của bạn" : "Something went wrong",
+    msg: rs ? "Vui lòng kiểm tra email của bạn" : "Something went wrong",
   });
 });
 
-export const resetPassword = asyncHandler(async (req: any, res: any) => {
+export const resetPassword = asyncHandler(async (req, res) => {
   const { newPassword, token } = req.body;
-  if (!newPassword || !token) throw new Error("Missing input");
+  if (!newPassword) throw new Error("Vui lòng nhập mật khẩu mới");
+  if (!token) throw new Error("Vui lòng nhập mã xác nhận");
   const passwordResetToken = crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
   const user = await db.User.findOne({
-    resetPwdToken: passwordResetToken,
-    resetPwdExpires: { $gt: Date.now() },
+    where: {
+      resetPwdToken: passwordResetToken,
+      resetPwdExpires: { [Op.gt]: Date.now() },
+    },
   });
-  if (!user) throw new Error("Invalid reset token");
+  if (!user) throw new Error("Token không hợp lệ hoặc đã hết hạn");
   user.update({
     password: hashPassword(newPassword),
     resetPwdToken: null,
@@ -181,41 +196,24 @@ export const resetPassword = asyncHandler(async (req: any, res: any) => {
     passwordChangedAt: Date.now(),
   });
 
-  return res.status(200).json({
+  res.status(200).json({
     success: user ? true : false,
-    mes: user ? "Updated password" : "Something went wrong",
+    msg: user
+      ? "Cập nhật mật khẩu thành công, vui lòng đăng nhập lại"
+      : "Cập nhật mật khẩu thất bại",
   });
 });
 
-export const verifyEmail = asyncHandler(async (req: any, res: any) => {
-  const cookie = req.cookies;
-  const { token } = req.params;
-  if (!cookie || cookie?.dataregister?.token !== token) {
-    res.clearCookie("dataregister");
-    return res.status(400).json({
-      success: false,
-      mes: "Token không hợp lệ",
-    });
-  }
-  const newUser = await db.User.create({
-    email: cookie?.dataregister?.email,
-    password: hashPassword(cookie?.dataregister?.password),
-    fullname: cookie?.dataregister?.fullname,
-    phone: cookie?.dataregister?.phone,
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token, email } = req.body;
+  const user = await db.User.findOne({
+    where: { email, registerToken: token },
   });
-  res.clearCookie("dataregister");
-  if (newUser) {
-    const user = await db.User.findOne({ email: cookie?.dataregister?.email });
-    if (!user) throw new Error("User not found");
-    await user.update({ emailVerified: true });
-    return res.status(200).json({
-      success: true,
-      mes: "Tạo tài khoản thành công",
-      newUser,
-    });
-  } else
-    return res.status(400).json({
-      success: false,
-      mes: "Tạo tài khoản thất bại",
-    });
+  if (!user) throw new Error("Token không hợp lệ");
+  await user.update({ emailVerified: true });
+  res.status(200).json({
+    success: true,
+    msg: "Xác nhận đăng ký thành công, bạn có thể đăng nhập",
+    user,
+  });
 });

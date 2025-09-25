@@ -28,4 +28,4 @@ const sendMail = async ({ email, html, subject }: SendMailBody) => {
   return info;
 };
 
-module.exports = { sendMail };
+export default sendMail;

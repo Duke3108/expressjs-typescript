@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import db from "../models/index.js";
 import { Op } from "sequelize";
+import "dotenv/config";
 
 export const createUser = asyncHandler(async (req: any, res: any) => {
   const { email, password, fullname, phone } = req.body;
@@ -92,11 +93,11 @@ export const getUserById = asyncHandler(async (req: any, res: any) => {
 
 export const updateUser = asyncHandler(async (req: any, res: any) => {
   const { uid } = req.params;
-  const { fullname, phone } = req.body;
-  if (!fullname || !phone) throw new Error("Missing inputs");
+  const { fullname } = req.body;
+  if (!fullname) throw new Error("Missing inputs");
   const user = await db.User.findByPk(uid);
   if (user) {
-    await user.update({ fullname, phone });
+    await user.update({ fullname });
   }
   return res.status(200).json({
     success: user ? true : false,

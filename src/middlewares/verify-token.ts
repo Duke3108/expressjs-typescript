@@ -21,9 +21,9 @@ export const verifyToken = async (req: any, res: any, next: any) => {
 };
 export const isAdmin = asyncHandler(async (req: any, res: any, next: any) => {
   const { role } = req.user;
-  if (role !== "admin")
+  if (+role !== 3108)
     return res.status(401).json({
-      success: true,
+      success: false,
       mes: "Require admin role",
     });
   next();

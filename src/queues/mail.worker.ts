@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+dotenv.config({
+  path: ".env",
+});
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
 import nodemailer from "nodemailer";
@@ -14,8 +18,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_NAME,
-    pass: process.env.EMAIL_APP_PASSWORD,
+    user: process.env.EMAIL_NAME || "tuockhuu57@gmail.com",
+    pass: process.env.EMAIL_APP_PASSWORD || "zeihotiwxlxwrduh",
   },
 });
 

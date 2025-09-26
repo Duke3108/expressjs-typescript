@@ -11,3 +11,11 @@ merge mq
     xai thu vien concurrently
     
 DI
+    InversifyJS
+    → phổ biến, hỗ trợ decorator, type-safe.
+
+    Awilix
+    → nhẹ, hỗ trợ express middleware rất tốt.
+
+    TSyringe
+    → của Microsoft, dùng decorator injection.

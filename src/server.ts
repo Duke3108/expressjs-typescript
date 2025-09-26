@@ -1,8 +1,10 @@
+import "reflect-metadata";
 import express from "express";
 import connectDB from "./config/dbConnect.ts";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import initRoutes from "./routes/index.ts";
+
 const app = express();
 const PORT = process.env.PORT || 8888;
 

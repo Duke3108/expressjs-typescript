@@ -1,18 +1,15 @@
-import {
-  createUser,
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-} from "../controllers/user.controller.ts";
 import { verifyToken, isAdmin } from "../middlewares/verify-token.ts";
 import { Router } from "express";
-const router = Router();
+import { container } from "tsyringe";
+import { UserController } from "../controllers/user.controller.ts";
 
-router.post("/", [verifyToken, isAdmin], createUser);
-router.get("/", [verifyToken, isAdmin], getAllUsers);
-router.get("/:uid", verifyToken, getUserById);
-router.patch("/:uid", verifyToken, updateUser);
-router.delete("/:uid", [verifyToken, isAdmin], deleteUser);
+const router = Router();
+const userController = container.resolve(UserController);
+
+router.post("/", [verifyToken, isAdmin], userController.createUser);
+router.get("/", [verifyToken, isAdmin], userController.getAllUsers);
+router.get("/:uid", verifyToken, userController.getUserById);
+router.patch("/:uid", verifyToken, userController.updateUser);
+router.delete("/:uid", [verifyToken, isAdmin], userController.deleteUser);
 
 export default router;

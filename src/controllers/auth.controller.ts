@@ -12,7 +12,7 @@ import "dotenv/config";
 import addMailJob from "../queues/mail.producer.ts";
 import { Op } from "sequelize";
 
-const hashPassword = (password: string) => {
+export const hashPassword = (password: string) => {
   const salt = brcypt.genSaltSync(10);
   const hashedPassword = brcypt.hashSync(password, salt);
   return hashedPassword;

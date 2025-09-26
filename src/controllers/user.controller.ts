@@ -1,119 +1,67 @@
 import asyncHandler from "express-async-handler";
 import db from "../models/index.ts";
-import { Op, type Order, type WhereOptions } from "sequelize";
 import "dotenv/config";
+import { injectable, inject } from "tsyringe";
+import { UserService } from "../services/user.service.ts";
+import { hashPassword } from "./auth.controller.ts";
 
-export const createUser = asyncHandler(async (req, res) => {
-  const { email, password, fullname, phone } = req.body;
-  if (!email || !password || !fullname || !phone) {
-    res.status(400).json({
-      success: false,
-      msg: "missing inputs",
+@injectable()
+export class UserController {
+  constructor(@inject(UserService) private userService: UserService) {}
+
+  getUserById = asyncHandler(async (req, res) => {
+    const user = await this.userService.getUserProfile(Number(req.params.uid));
+    res.json({
+      success: true,
+      user,
     });
-  }
-  const user = await db.User.findOne({ where: { email } });
-  if (user) throw new Error("Tài khoản đã tồn tại");
-  const response = await db.User.create({
-    email,
-    password,
-    fullname,
-    phone,
   });
-  res.status(200).json({
-    success: response ? true : false,
-    createdUser: response ? response : "Tạo tài khoản thất bại",
-  });
-});
 
-export const getAllUsers = asyncHandler(async (req, res) => {
-  const queries = { ...req.query };
-
-  // Tách các field đặc biệt
-  const excludeFields = ["limit", "sort", "page", "fields"];
-  excludeFields.forEach((el) => delete queries[el]);
-
-  let formatedQueries: WhereOptions = {};
-
-  if (req.query.q) {
-    formatedQueries = {
-      [Op.or]: [
-        { email: { [Op.iLike]: `%${req.query.q}%` } },
-        { fullname: { [Op.iLike]: `%${req.query.q}%` } },
-        { phone: { [Op.iLike]: `%${req.query.q}%` } },
-      ],
-    };
-  }
-
-  // Sorting
-  let order: Order = [];
-  if (req.query.sort && typeof req.query.sort === "string") {
-    const sortBy: Order = req.query.sort.split(",").map((el) => {
-      if (el.startsWith("-")) return [el.substring(1), "DESC"];
-      return [el, "ASC"];
+  getAllUsers = asyncHandler(async (req, res) => {
+    const { users, count } = await this.userService.getAllUsers(req.query);
+    res.status(200).json({
+      success: true,
+      counts: count,
+      users,
     });
-    order = sortBy;
-  }
-
-  // Pagination
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const offset = (page - 1) * limit;
-
-  // Execute query
-  const { rows: users, count } = await db.User.findAndCountAll({
-    where: formatedQueries,
-    order,
-    limit,
-    offset,
   });
 
-  res.status(200).json({
-    success: true,
-    counts: count,
-    users,
-  });
-});
+  createUser = asyncHandler(async (req, res) => {
+    const { email, password, fullname, phone } = req.body;
+    if (!email || !password || !fullname || !phone)
+      throw new Error("Missing inputs");
+    const response = await this.userService.createUser({
+      email,
+      password: hashPassword(password),
+      fullname,
+      phone,
+    });
 
-export const getUserById = asyncHandler(async (req, res) => {
-  const { uid } = req.params;
-  const user = await db.User.findByPk(uid, {
-    attributes: {
-      exclude: ["password", "resetPwdExpires", "updatedAt", "resetPwdToken"],
-    },
+    res.status(200).json({
+      success: response ? true : false,
+      createdUser: response ? response : "Tạo tài khoản thất bại",
+    });
+    return;
   });
-  if (!user) {
-    throw new Error("Không tìm thấy người dùng");
-  }
-  res.json({
-    success: true,
-    user,
-  });
-});
 
-export const updateUser = asyncHandler(async (req, res) => {
-  const { uid } = req.params;
-  const { fullname } = req.body;
-  if (!fullname) throw new Error("Missing inputs");
-  const user = await db.User.findByPk(uid);
-  if (!user) throw new Error("Không tìm thấy người dùng");
-  const response = await user.update({ fullname });
-  res.status(200).json({
-    success: response ? true : false,
-    mes: response
-      ? "Cập nhật người dùng thành công"
-      : "Cập nhật người dùng thất bại",
+  updateUser = asyncHandler(async (req, res) => {
+    const { uid } = req.params;
+    const response = await this.userService.updateUser(Number(uid), req.body);
+    res.status(200).json({
+      success: response ? true : false,
+      mes: response
+        ? "Cập nhật người dùng thành công"
+        : "Cập nhật người dùng thất bại",
+    });
+    return;
   });
-});
 
-export const deleteUser = asyncHandler(async (req, res) => {
-  const { uid } = req.params;
-  const user = await db.User.findByPk(uid);
-  if (!user) throw new Error("Không tìm thấy người dùng");
-  const response = await db.User.destroy({ where: { id: uid } });
-  res.status(200).json({
-    success: response ? true : false,
-    mes: response
-      ? `Đã xóa tài khoản ${user.fullname}`
-      : "Xóa tài khoản thất bại",
+  deleteUser = asyncHandler(async (req, res) => {
+    const { uid } = req.params;
+    const response = await this.userService.deleteUser(Number(uid));
+    res.status(200).json({
+      success: response ? true : false,
+      mes: response ? `Đã xóa tài khoản id: ${uid}` : "Xóa tài khoản thất bại",
+    });
   });
-});
+}

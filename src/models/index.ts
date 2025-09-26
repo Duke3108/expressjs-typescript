@@ -62,7 +62,8 @@ async function loadModels() {
     return (
       file.indexOf(".") !== 0 &&
       file !== path.basename(__filename) &&
-      file.endsWith(".js") &&
+      (file.endsWith(".js") || file.endsWith(".ts")) &&
+      !file.endsWith(".test.ts") &&
       !file.endsWith(".test.js")
     );
   });

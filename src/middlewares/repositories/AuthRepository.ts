@@ -4,7 +4,6 @@ import brcypt from "bcryptjs";
 import type { UserData } from "./UserRepository.ts";
 import { generateAccessToken, generateRefreshToken } from "../jwt.ts";
 import crypto from "crypto";
-import { Op } from "sequelize";
 import { hashPassword } from "../../controllers/auth.controller.ts";
 
 const createPasswordChangeToken = async (userId: number) => {
@@ -56,17 +55,13 @@ export class AuthRepository {
     return await user.save();
   }
 
-  // async refreshToken(userId: number, token: string) {
-  //   // check token trong DB
-  //   const user = await db.User.findOne({
-  //     where: {
-  //       id: userId,
-  //       refreshToken: token,
-  //     },
-  //   });
-  //   if (!user) throw new Error("Token không hợp lệ 1");
-  //   return generateAccessToken(user.id, user.role);
-  // }
+  async refreshToken(userId: number, token: string) {
+    const user = await db.User.findOne({
+      where: { id: userId, refreshToken: token },
+    });
+    if (!user) throw new Error("Token không hợp lệ");
+    return generateAccessToken(user.id, user.role);
+  }
 
   async forgotPassword(email: string) {
     const user = await db.User.findOne({ where: { email } });

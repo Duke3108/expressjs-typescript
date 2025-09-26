@@ -4,7 +4,6 @@ import {
   type UserRegisterInput,
 } from "../middlewares/repositories/AuthRepository.ts";
 import addMailJob, { type MailJobData } from "../queues/mail.producer.ts";
-import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import "dotenv/config";
 
 @injectable()
@@ -23,22 +22,9 @@ export class AuthService {
     return await this.authRepo.login(email, password);
   }
 
-  // async refreshToken(token: string) {
-  //   return jwt.verify(
-  //     token,
-  //     process.env.JWT_REFRESH_KEY as string,
-  //     async (
-  //       err: VerifyErrors | null,
-  //       decoded: JwtPayload | string | undefined
-  //     ) => {
-  //       if (err) {
-  //         throw new Error("Token không hợp lệ 2");
-  //       }
-  //       const payload = decoded as { id: number };
-  //       return await this.authRepo.refreshToken(payload.id, token);
-  //     }
-  //   );
-  // }
+  async refreshToken(userId: number, token: string) {
+    return this.authRepo.refreshToken(userId, token);
+  }
 
   async forgotPassword(email: string) {
     return await this.authRepo.forgotPassword(email);

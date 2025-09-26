@@ -1,18 +1,14 @@
 import asyncHandler from "express-async-handler";
-import db from "../models/index.ts";
 import brcypt from "bcryptjs";
-
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../middlewares/jwt.ts";
-import crypto from "crypto";
 import makeToken from "uniqid";
 import "dotenv/config";
-import addMailJob from "../queues/mail.producer.ts";
-import { Op } from "sequelize";
 import { inject, injectable } from "tsyringe";
 import { AuthService } from "../services/auth.service.ts";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 
 export const hashPassword = (password: string) => {
   const salt = brcypt.genSaltSync(10);
@@ -83,14 +79,23 @@ export class AuthController {
     return;
   });
 
-  // refreshToken = asyncHandler(async (req, res) => {
-  //   const token = req.body.refreshToken;
-  //   const response = await this.authService.refreshToken(token);
-  //   return res.status(200).json({
-  //         success: response ? true : false,
-  //         newAccessToken: response,
-  //       });
-  // });
+  refreshToken = asyncHandler(async (req, res) => {
+    const token = req.body.refreshToken;
+    if (!token) throw new Error("Thiếu refresh token");
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_REFRESH_KEY as string
+    ) as JwtPayload & { id: number };
+    const newAccessToken = await this.authService.refreshToken(
+      decoded.id,
+      token
+    );
+    res.status(200).json({
+      success: true,
+      newAccessToken,
+    });
+    return;
+  });
 
   forgotPassword = asyncHandler(async (req, res) => {
     const email = req.body.email;

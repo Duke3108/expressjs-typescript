@@ -1,54 +1,53 @@
 import asyncHandler from "express-async-handler";
-import db from "../models/index.js";
-import { Op } from "sequelize";
+import db from "../models/index.ts";
+import { Op, type Order, type WhereOptions } from "sequelize";
 import "dotenv/config";
 
-export const createUser = asyncHandler(async (req: any, res: any) => {
+export const createUser = asyncHandler(async (req, res) => {
   const { email, password, fullname, phone } = req.body;
   if (!email || !password || !fullname || !phone) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
-      mes: "missing inputs",
+      msg: "missing inputs",
     });
   }
-  const user = await db.User.findOne({ email });
-  if (user) throw new Error("User has existed");
-  else {
-    const response = await db.User.create({
-      email,
-      password,
-      fullname,
-      phone,
-    });
-    return res.status(200).json({
-      success: response ? true : false,
-      createdUser: response ? response : "Cannot create user",
-    });
-  }
+  const user = await db.User.findOne({ where: { email } });
+  if (user) throw new Error("Tài khoản đã tồn tại");
+  const response = await db.User.create({
+    email,
+    password,
+    fullname,
+    phone,
+  });
+  res.status(200).json({
+    success: response ? true : false,
+    createdUser: response ? response : "Tạo tài khoản thất bại",
+  });
 });
 
-export const getAllUsers = asyncHandler(async (req: any, res: any) => {
+export const getAllUsers = asyncHandler(async (req, res) => {
   const queries = { ...req.query };
 
   // Tách các field đặc biệt
   const excludeFields = ["limit", "sort", "page", "fields"];
   excludeFields.forEach((el) => delete queries[el]);
 
-  let formatedQueries: { [key: string]: any } = {};
+  let formatedQueries: WhereOptions = {};
 
-  // Search q: email, fullname, phone
   if (req.query.q) {
-    formatedQueries[Op.or as any] = [
-      { email: { [Op.iLike]: `%${req.query.q}%` } },
-      { fullname: { [Op.iLike]: `%${req.query.q}%` } },
-      { phone: { [Op.iLike]: `%${req.query.q}%` } },
-    ];
+    formatedQueries = {
+      [Op.or]: [
+        { email: { [Op.iLike]: `%${req.query.q}%` } },
+        { fullname: { [Op.iLike]: `%${req.query.q}%` } },
+        { phone: { [Op.iLike]: `%${req.query.q}%` } },
+      ],
+    };
   }
 
   // Sorting
-  let order = [];
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(",").map((el: any) => {
+  let order: Order = [];
+  if (req.query.sort && typeof req.query.sort === "string") {
+    const sortBy: Order = req.query.sort.split(",").map((el) => {
       if (el.startsWith("-")) return [el.substring(1), "DESC"];
       return [el, "ASC"];
     });
@@ -56,8 +55,8 @@ export const getAllUsers = asyncHandler(async (req: any, res: any) => {
   }
 
   // Pagination
-  const page = +req.query.page || 1;
-  const limit = +req.query.limit || 10;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
   const offset = (page - 1) * limit;
 
   // Execute query
@@ -68,14 +67,14 @@ export const getAllUsers = asyncHandler(async (req: any, res: any) => {
     offset,
   });
 
-  return res.status(200).json({
+  res.status(200).json({
     success: true,
     counts: count,
     users,
   });
 });
 
-export const getUserById = asyncHandler(async (req: any, res: any) => {
+export const getUserById = asyncHandler(async (req, res) => {
   const { uid } = req.params;
   const user = await db.User.findByPk(uid, {
     attributes: {
@@ -91,28 +90,30 @@ export const getUserById = asyncHandler(async (req: any, res: any) => {
   });
 });
 
-export const updateUser = asyncHandler(async (req: any, res: any) => {
+export const updateUser = asyncHandler(async (req, res) => {
   const { uid } = req.params;
   const { fullname } = req.body;
   if (!fullname) throw new Error("Missing inputs");
   const user = await db.User.findByPk(uid);
-  if (user) {
-    await user.update({ fullname });
-  }
-  return res.status(200).json({
-    success: user ? true : false,
-    mes: user ? "Cập nhật người dùng thành công" : "Something went wrong",
+  if (!user) throw new Error("Không tìm thấy người dùng");
+  const response = await user.update({ fullname });
+  res.status(200).json({
+    success: response ? true : false,
+    mes: response
+      ? "Cập nhật người dùng thành công"
+      : "Cập nhật người dùng thất bại",
   });
 });
 
-export const deleteUser = asyncHandler(async (req: any, res: any) => {
+export const deleteUser = asyncHandler(async (req, res) => {
   const { uid } = req.params;
   const user = await db.User.findByPk(uid);
+  if (!user) throw new Error("Không tìm thấy người dùng");
   const response = await db.User.destroy({ where: { id: uid } });
-  return res.status(200).json({
+  res.status(200).json({
     success: response ? true : false,
     mes: response
-      ? `Đã xóa tài khoản của người dùng ${user.fullname}`
-      : "Không tìm thấy người dùng",
+      ? `Đã xóa tài khoản ${user.fullname}`
+      : "Xóa tài khoản thất bại",
   });
 });

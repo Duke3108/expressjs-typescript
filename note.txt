@@ -5,3 +5,9 @@ Redis phải chạy trước (Docker: docker run -p 6379:6379 --name redis -d re
 Chạy app chính (Express) → producer hoạt động khi có request.
 
 Chạy file worker riêng: node mail.worker.js
+
+merge mq
+    import truc tiep chay chung voi server
+    xai thu vien concurrently
+    
+DI

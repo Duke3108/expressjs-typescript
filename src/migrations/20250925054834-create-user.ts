@@ -1,6 +1,6 @@
 "use strict";
 
-import { enumData } from "../utils/constant.js";
+import { enumData } from "../utils/constant.ts";
 import {
   BOOLEAN,
   DATE,

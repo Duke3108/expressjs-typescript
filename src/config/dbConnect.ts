@@ -2,10 +2,10 @@ import dotenv from "dotenv";
 import { Sequelize, type Dialect } from "sequelize";
 dotenv.config();
 
-const dbName = process.env.DB_NAME as string;
-const dbUser = process.env.DB_USER as string;
-const dbPassword = process.env.DB_PASSWORD as string;
-const dbHost = process.env.DB_HOST as string;
+const dbName = process.env.DB_NAME ?? "";
+const dbUser = process.env.DB_USER ?? "";
+const dbPassword = process.env.DB_PASSWORD ?? "";
+const dbHost = process.env.DB_HOST ?? "";
 const dbDialect = process.env.DB_DIALECT as Dialect;
 
 const sequelize = new Sequelize(dbName, dbUser, dbPassword, {

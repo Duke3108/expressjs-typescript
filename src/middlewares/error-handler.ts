@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
+import type { VerifyErrors } from "jsonwebtoken";
 
 export const errorHandler = (
-  err: any,
+  err: VerifyErrors | Error,
   req: Request,
   res: Response,
   next: NextFunction

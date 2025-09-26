@@ -1,9 +1,9 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
-import { enumData } from "../utils/constant.js";
+import { enumData } from "../utils/constant.ts";
 
 export default (sequelize: Sequelize) => {
   class User extends Model {
-    static associate(models: any) {
+    static associate() {
       // define association here
     }
   }

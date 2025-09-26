@@ -1,15 +1,15 @@
 import asyncHandler from "express-async-handler";
-import db from "../models/index.js";
+import db from "../models/index.ts";
 import brcypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import {
   generateAccessToken,
   generateRefreshToken,
-} from "../middlewares/jwt.js";
+} from "../middlewares/jwt.ts";
 import crypto from "crypto";
 import makeToken from "uniqid";
 import "dotenv/config";
-import addMailJob from "../queues/mail.producer.js";
+import addMailJob from "../queues/mail.producer.ts";
 import { Op } from "sequelize";
 
 const hashPassword = (password: string) => {
@@ -25,7 +25,12 @@ const isCorrectPassword = async (
   return await brcypt.compare(inputPassword, hashedPassword);
 };
 
-const createPasswordChangeToken = async (user: any) => {
+const createPasswordChangeToken = async (user: {
+  update: (arg0: {
+    resetPwdToken: string;
+    resetPwdExpires: number;
+  }) => Promise<void>;
+}) => {
   const resetToken = crypto.randomBytes(32).toString("hex");
   const passwordResetToken = crypto
     .createHash("sha256")
@@ -128,24 +133,29 @@ export const refreshToken = asyncHandler(async (req, res) => {
   jwt.verify(
     token,
     process.env.JWT_REFRESH_KEY as string,
-    async (err: any, decode: any) => {
-      if (err)
+    (err: VerifyErrors | null, decoded: JwtPayload | string | undefined) => {
+      if (err) {
         return res.status(401).json({
           success: false,
           msg: "Token không hợp lệ",
         });
-      //check token voi token luu trong db
-      const response = await db.User.findOne({
+      }
+
+      const payload = decoded as { id: string };
+
+      // check token trong DB
+      db.User.findOne({
         where: {
-          id: decode.id,
+          id: payload.id,
           refreshToken: token,
         },
-      });
-      return res.status(200).json({
-        success: response ? true : false,
-        newAccessToken: response
-          ? generateAccessToken(response.id, response.role)
-          : "Token không hợp lệ",
+      }).then((response: { id: number; role: string }) => {
+        return res.status(200).json({
+          success: !!response,
+          newAccessToken: response
+            ? generateAccessToken(response.id, response.role)
+            : "Token không hợp lệ",
+        });
       });
     }
   );

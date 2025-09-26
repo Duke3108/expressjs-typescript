@@ -6,7 +6,7 @@ import {
   register,
   resetPassword,
   verifyEmail,
-} from "../controllers/auth.controller.js";
+} from "../controllers/auth.controller.ts";
 const router = Router();
 
 router.post("/register", register);

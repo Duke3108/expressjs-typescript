@@ -1,6 +1,12 @@
-import mailQueue from "./mail.queue.js";
+import mailQueue from "./mail.queue.ts";
 
-const addMailJob = async ({ email, subject, html }: any) => {
+type MailJobData = {
+  email: string;
+  subject: string;
+  html: string;
+};
+
+const addMailJob = async ({ email, subject, html }: MailJobData) => {
   return await mailQueue.add("sendMail", {
     email,
     subject,

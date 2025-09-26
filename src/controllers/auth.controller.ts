@@ -25,18 +25,14 @@ const isCorrectPassword = async (
   return await brcypt.compare(inputPassword, hashedPassword);
 };
 
-const createPasswordChangeToken = async (user: {
-  update: (arg0: {
-    resetPwdToken: string;
-    resetPwdExpires: number;
-  }) => Promise<void>;
-}) => {
+const createPasswordChangeToken = async (userId: number) => {
   const resetToken = crypto.randomBytes(32).toString("hex");
   const passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
   const passwordResetExpires = Date.now() + 15 * 60 * 1000;
+  const user = await db.User.findByPk(userId);
   await user.update({
     resetPwdToken: passwordResetToken,
     resetPwdExpires: passwordResetExpires,
@@ -166,7 +162,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   if (!email) throw new Error("Missing email");
   const user = await db.User.findOne({ where: { email } });
   if (!user) throw new Error("User not found");
-  const resetToken = await createPasswordChangeToken(user);
+  const resetToken = await createPasswordChangeToken(user.id);
 
   const html = `Nhập reset token để thay đổi mật khẩu. 
         Token sẽ hết hạn sau 15 phút. <b>${resetToken}</b>`;

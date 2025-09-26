@@ -1,19 +1,15 @@
 import { Router } from "express";
-import {
-  forgotPassword,
-  login,
-  refreshToken,
-  register,
-  resetPassword,
-  verifyEmail,
-} from "../controllers/auth.controller.ts";
-const router = Router();
+import { container } from "tsyringe";
+import { AuthController } from "../controllers/auth.controller.ts";
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.post("/refresh-token", refreshToken);
-router.post("/verify-email", verifyEmail);
+const router = Router();
+const authController = container.resolve(AuthController);
+
+router.post("/register", authController.register);
+router.post("/login", authController.login);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+// router.post("/refresh-token", authController.refreshToken);
+router.post("/verify-email/:token", authController.verifyEmail);
 
 export default router;

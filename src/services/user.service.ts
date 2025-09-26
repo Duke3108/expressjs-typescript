@@ -3,12 +3,11 @@ import {
   UserRepository,
   type UserData,
 } from "../middlewares/repositories/UserRepository.ts";
-import type { Request } from "express";
 import type { ParsedQs } from "qs";
 
 @injectable()
 export class UserService {
-  constructor(@inject(UserRepository) private userRepo: UserRepository) {}
+  constructor(@inject("UserRepository") private userRepo: UserRepository) {}
 
   async getUserProfile(id: number) {
     const user = await this.userRepo.findById(id);

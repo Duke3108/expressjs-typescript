@@ -29,7 +29,8 @@
     "start": "tsc && nodemon dist/server.js",
     "mq": "node dist/queues/mail.worker.js",
     "mock": "concurrently \"npm run mq\" \"npm start\"",
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "devv": "concurrently \"npm run mq\" \"npm run dev\""
   },
   "type": "module",
   "keywords": [],

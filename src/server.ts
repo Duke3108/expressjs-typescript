@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import express from "express";
+import "./container.ts";
 import connectDB from "./config/dbConnect.ts";
 import cors from "cors";
 import cookieParser from "cookie-parser";

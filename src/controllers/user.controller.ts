@@ -1,5 +1,4 @@
 import asyncHandler from "express-async-handler";
-import db from "../models/index.ts";
 import "dotenv/config";
 import { injectable, inject } from "tsyringe";
 import { UserService } from "../services/user.service.ts";
@@ -7,7 +6,7 @@ import { hashPassword } from "./auth.controller.ts";
 
 @injectable()
 export class UserController {
-  constructor(@inject(UserService) private userService: UserService) {}
+  constructor(@inject("UserService") private userService: UserService) {}
 
   getUserById = asyncHandler(async (req, res) => {
     const user = await this.userService.getUserProfile(Number(req.params.uid));

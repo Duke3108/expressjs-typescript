@@ -1,6 +1,6 @@
 import mailQueue from "./mail.queue.ts";
 
-type MailJobData = {
+export type MailJobData = {
   email: string;
   subject: string;
   html: string;

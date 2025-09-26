@@ -19,3 +19,5 @@ DI
 
     TSyringe
     → của Microsoft, dùng decorator injection.
+
+    bo repo

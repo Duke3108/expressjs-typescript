@@ -1,15 +1,71 @@
-import { verifyToken, isAdmin } from "../middlewares/verify-token.ts";
 import { Router } from "express";
 import { container } from "tsyringe";
 import { UserController } from "../controllers/user.controller.ts";
+import { isAdmin, verifyToken } from "../middlewares/verify-token.ts";
 
-const router = Router();
-const userController = container.resolve(UserController);
+class UserRoutes {
+  public router: Router;
+  private userController: UserController;
 
-router.post("/", [verifyToken, isAdmin], userController.createUser);
-router.get("/", [verifyToken, isAdmin], userController.getAllUsers);
-router.get("/:uid", verifyToken, userController.getUserById);
-router.patch("/:uid", verifyToken, userController.updateUser);
-router.delete("/:uid", [verifyToken, isAdmin], userController.deleteUser);
+  constructor() {
+    this.router = Router();
+    this.userController = container.resolve(UserController);
+    //this.initializeRoutes();
+    this.testRoutes();
+  }
 
-export default router;
+  private testRoutes() {
+    this.router.get(
+      "/test/:uid",
+      this.userController.getUserByIdTest.bind(this.userController)
+    );
+    this.router.get(
+      "/test/email/:email",
+      this.userController.getUserByEmailTest.bind(this.userController)
+    );
+    this.router.get(
+      "/test",
+      this.userController.getAllUsersTest.bind(this.userController)
+    );
+    this.router.post(
+      "/test",
+      this.userController.createUserTest.bind(this.userController)
+    );
+  }
+
+  private initializeRoutes() {
+    this.router.post(
+      "/",
+      [verifyToken, isAdmin],
+      this.userController.createUser.bind(this.userController)
+    );
+
+    this.router.get(
+      "/",
+      [verifyToken, isAdmin],
+      this.userController.getAllUsers.bind(this.userController)
+    );
+
+    this.router.get(
+      "/:uid",
+      verifyToken,
+      this.userController.getUserById.bind(this.userController)
+    );
+
+    this.router.patch(
+      "/:uid",
+      verifyToken,
+      this.userController.updateUser.bind(this.userController)
+    );
+
+    this.router.delete(
+      "/:uid",
+      [verifyToken, isAdmin],
+      this.userController.deleteUser.bind(this.userController)
+    );
+  }
+}
+
+const userRoutes = new UserRoutes().router;
+
+export default userRoutes;

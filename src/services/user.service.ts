@@ -1,7 +1,9 @@
-import { injectable, inject } from "tsyringe";
+import { inject, injectable } from "tsyringe";
 import type { ParsedQs } from "qs";
 import db from "../models/index.ts";
 import { Op, type Order, type WhereOptions } from "sequelize";
+import { UserRepository } from "../repositories/userRepository.ts";
+import { User } from "../entity/User.ts";
 
 export type UserData = {
   email: string;
@@ -12,6 +14,26 @@ export type UserData = {
 
 @injectable()
 export class UserService {
+  constructor(@inject("UserRepository") private userRepo: UserRepository) {}
+
+  //test
+  async createUserTest(data: Partial<User>) {
+    return this.userRepo.createTest(data);
+  }
+
+  async getUsersTest() {
+    return this.userRepo.findAllTest();
+  }
+
+  async getUserByIdTest(id: number) {
+    return this.userRepo.findByIdTest(id);
+  }
+
+  async getUserByEmailTest(email: string) {
+    return this.userRepo.findByEmailTest(email);
+  }
+
+  //code chinh
   async getUserProfile(id: number) {
     const user = await db.User.findByPk(id, {
       attributes: {

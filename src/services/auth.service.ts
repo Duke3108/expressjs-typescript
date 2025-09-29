@@ -8,27 +8,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../middlewares/jwt.ts";
-import { hashPassword } from "../controllers/auth.controller.ts";
 import type { UserData } from "./user.service.ts";
-
-const createPasswordChangeToken = async (userId: number) => {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  const passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-  const passwordResetExpires = Date.now() + 15 * 60 * 1000;
-  const user = await db.User.findByPk(userId);
-  await user.update({
-    resetPwdToken: passwordResetToken,
-    resetPwdExpires: passwordResetExpires,
-  });
-  return resetToken;
-};
-
-const isCorrectPassword = (inputPassword: string, hashedPassword: string) => {
-  return brcypt.compareSync(inputPassword, hashedPassword);
-};
 
 type UserRegisterInput = UserData & {
   registerToken: string;
@@ -36,6 +16,34 @@ type UserRegisterInput = UserData & {
 
 @injectable()
 export class AuthService {
+  public static async hashPassword(password: string) {
+    const salt = await brcypt.genSalt(10);
+    const hashedPassword = await brcypt.hash(password, salt);
+    return hashedPassword;
+  }
+
+  private static isCorrectPassword(
+    inputPassword: string,
+    hashedPassword: string
+  ) {
+    return brcypt.compareSync(inputPassword, hashedPassword);
+  }
+
+  private static async createPasswordChangeToken(userId: number) {
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const passwordResetExpires = Date.now() + 15 * 60 * 1000;
+    const user = await db.User.findByPk(userId);
+    await user.update({
+      resetPwdToken: passwordResetToken,
+      resetPwdExpires: passwordResetExpires,
+    });
+    return resetToken;
+  }
+
   async register(userData: UserRegisterInput) {
     const user = await db.User.findOne({ where: { email: userData.email } });
     if (user) throw new Error("Tài khoản đã tồn tại");
@@ -53,7 +61,7 @@ export class AuthService {
     const user = await db.User.findOne({ where: { email } });
     if (!user) throw new Error("Tài khoản không tồn tại");
     if (!user.emailVerified) throw new Error("Tài khoản chưa được xác thực");
-    if (!isCorrectPassword(password, user.password))
+    if (!AuthService.isCorrectPassword(password, user.password))
       throw new Error("Sai mật khẩu");
     const newRefreshToken = generateRefreshToken(user.id);
     user.refreshToken = newRefreshToken;
@@ -71,7 +79,7 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await db.User.findOne({ where: { email } });
     if (!user) throw new Error("Tài khoản không tồn tại");
-    return await createPasswordChangeToken(user.id);
+    return await AuthService.createPasswordChangeToken(user.id);
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -92,7 +100,7 @@ export class AuthService {
       await user.save();
       throw new Error("Token đã hết hạn");
     }
-    user.password = hashPassword(newPassword);
+    user.password = AuthService.hashPassword(newPassword);
     user.resetPwdToken = "";
     user.resetPwdExpires = null;
     user.passwordChangedAt = new Date();

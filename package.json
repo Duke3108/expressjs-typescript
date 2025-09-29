@@ -18,10 +18,10 @@
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "qs": "^6.14.0",
-    "reflect-metadata": "^0.2.2",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "tsyringe": "^4.10.0",
+    "typeorm": "^0.3.27",
     "uniqid": "^5.4.0"
   },
   "scripts": {
@@ -48,6 +48,7 @@
     "@types/uniqid": "^5.3.4",
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.10",
+    "reflect-metadata": "^0.2.2",
     "sequelize-cli": "^6.6.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",

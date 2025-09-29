@@ -1,14 +1,18 @@
 import type { Application } from "express";
+import authRoutes from "./auth.route.ts";
 import { errorHandler, notFound } from "../middlewares/error-handler.ts";
-import auth from "./auth.route.ts";
-import user from "./user.route.ts";
+import userRoutes from "./user.route.ts";
 
-const initRoutes = (app: Application) => {
-  app.use("/api/v1/auth", auth);
-  app.use("/api/v1/users", user);
+class RouteInitializer {
+  constructor(private app: Application) {}
 
-  app.use(notFound);
-  app.use(errorHandler);
-};
+  public initRoutes() {
+    this.app.use("/api/v1/auth", authRoutes);
+    this.app.use("/api/v1/users", userRoutes);
 
-export default initRoutes;
+    this.app.use(notFound);
+    this.app.use(errorHandler);
+  }
+}
+
+export default RouteInitializer;

@@ -1,20 +1,10 @@
 import asyncHandler from "express-async-handler";
-import brcypt from "bcryptjs";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../middlewares/jwt.ts";
+import { generateAccessToken } from "../middlewares/jwt.ts";
 import makeToken from "uniqid";
 import "dotenv/config";
 import { inject, injectable } from "tsyringe";
 import { AuthService } from "../services/auth.service.ts";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-
-export const hashPassword = (password: string) => {
-  const salt = brcypt.genSaltSync(10);
-  const hashedPassword = brcypt.hashSync(password, salt);
-  return hashedPassword;
-};
 
 @injectable()
 export class AuthController {
@@ -32,7 +22,7 @@ export class AuthController {
     const token = makeToken();
     await this.authService.register({
       email,
-      password: hashPassword(password),
+      password: await AuthService.hashPassword(password),
       fullname,
       phone,
       registerToken: token,

@@ -1,10 +1,12 @@
 import "reflect-metadata";
 import express from "express";
 import "./container.ts";
-import connectDB from "./config/dbConnect.ts";
+import dotenv from "dotenv";
+dotenv.config();
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import initRoutes from "./routes/index.ts";
+import RouteInitializer from "./routes/index.ts";
+import { initializeDB } from "./data-source.ts";
 
 const app = express();
 const PORT = process.env.PORT || 8888;
@@ -19,9 +21,11 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-connectDB();
 
-initRoutes(app);
+initializeDB();
+
+const routes = new RouteInitializer(app);
+routes.initRoutes();
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

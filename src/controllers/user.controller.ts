@@ -2,12 +2,58 @@ import asyncHandler from "express-async-handler";
 import "dotenv/config";
 import { injectable, inject } from "tsyringe";
 import { UserService } from "../services/user.service.ts";
-import { hashPassword } from "./auth.controller.ts";
+import { AuthService } from "../services/auth.service.ts";
 
 @injectable()
 export class UserController {
   constructor(@inject("UserService") private userService: UserService) {}
 
+  //test
+  getUserByIdTest = asyncHandler(async (req, res) => {
+    const user = await this.userService.getUserByIdTest(Number(req.params.uid));
+    res.json({
+      success: true,
+      user,
+    });
+  });
+
+  getUserByEmailTest = asyncHandler(async (req, res) => {
+    const user = await this.userService.getUserByEmailTest(
+      req.params.email ?? ""
+    );
+    res.json({
+      success: true,
+      user,
+    });
+  });
+
+  getAllUsersTest = asyncHandler(async (req, res) => {
+    const users = await this.userService.getUsersTest();
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  });
+
+  createUserTest = asyncHandler(async (req, res) => {
+    const { email, password, fullname, phone } = req.body;
+    if (!email || !password || !fullname || !phone)
+      throw new Error("Missing inputs");
+    const response = await this.userService.createUserTest({
+      email,
+      password: await AuthService.hashPassword(password),
+      fullname,
+      phone,
+    });
+
+    res.status(200).json({
+      success: response ? true : false,
+      createdUser: response ? response : "Tạo tài khoản thất bại",
+    });
+    return;
+  });
+
+  //code chinh
   getUserById = asyncHandler(async (req, res) => {
     const user = await this.userService.getUserProfile(Number(req.params.uid));
     res.json({
@@ -31,7 +77,7 @@ export class UserController {
       throw new Error("Missing inputs");
     const response = await this.userService.createUser({
       email,
-      password: hashPassword(password),
+      password: await AuthService.hashPassword(password),
       fullname,
       phone,
     });

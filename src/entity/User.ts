@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from "typeorm";
 import { enumData } from "../utils/constant.ts";
 
@@ -15,7 +16,7 @@ export class User {
   @Column({ type: "varchar", unique: true, nullable: false })
   email!: string;
 
-  @Column({ type: "varchar", nullable: false })
+  @Column({ type: "varchar", unique: true, nullable: false })
   phone!: string;
 
   @Column({ type: "varchar", nullable: false })
@@ -51,4 +52,13 @@ export class User {
 
   @Column({ type: "varchar", nullable: true })
   registerToken!: string | null;
+
+  @CreateDateColumn({ type: "timestamp" })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ type: "timestamp" })
+  updatedAt!: Date;
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

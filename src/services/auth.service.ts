@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
 import addMailJob, { type MailJobData } from "../queues/mail.producer.ts";
 import "dotenv/config";
 import db from "../models/index.ts";
@@ -8,103 +8,52 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../middlewares/jwt.ts";
+import { UserRepository } from "../repositories/userRepository.ts";
 import type { UserData } from "./user.service.ts";
 
-type UserRegisterInput = UserData & {
+type UserRegisterData = UserData & {
   registerToken: string;
 };
 
 @injectable()
 export class AuthService {
+  constructor(@inject("UserRepository") private userRepo: UserRepository) {}
+
   public static async hashPassword(password: string) {
     const salt = await brcypt.genSalt(10);
     const hashedPassword = await brcypt.hash(password, salt);
     return hashedPassword;
   }
 
-  private static isCorrectPassword(
-    inputPassword: string,
-    hashedPassword: string
-  ) {
-    return brcypt.compareSync(inputPassword, hashedPassword);
-  }
-
-  private static async createPasswordChangeToken(userId: number) {
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const passwordResetToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-    const passwordResetExpires = Date.now() + 15 * 60 * 1000;
-    const user = await db.User.findByPk(userId);
-    await user.update({
-      resetPwdToken: passwordResetToken,
-      resetPwdExpires: passwordResetExpires,
-    });
-    return resetToken;
-  }
-
-  async register(userData: UserRegisterInput) {
-    const user = await db.User.findOne({ where: { email: userData.email } });
+  async register(userData: UserRegisterData) {
+    const user = await this.userRepo.findByEmail(userData.email);
     if (user) throw new Error("Tài khoản đã tồn tại");
-    return await db.User.create(userData);
+    return await this.userRepo.create(userData);
   }
 
   async verifyEmail(token: string) {
-    const user = await db.User.findOne({ where: { registerToken: token } });
-    if (!user) throw new Error("Token không hợp lệ");
-    user.emailVerified = true;
-    return await user.save();
+    return await this.userRepo.verifyEmail(token);
   }
 
   async login(email: string, password: string) {
-    const user = await db.User.findOne({ where: { email } });
-    if (!user) throw new Error("Tài khoản không tồn tại");
-    if (!user.emailVerified) throw new Error("Tài khoản chưa được xác thực");
-    if (!AuthService.isCorrectPassword(password, user.password))
-      throw new Error("Sai mật khẩu");
-    const newRefreshToken = generateRefreshToken(user.id);
-    user.refreshToken = newRefreshToken;
-    return await user.save();
+    const user = await this.userRepo.login(email, password);
+    if (!user) throw new Error("Đăng nhập thất bại");
+    const accessToken = generateAccessToken(user.id, user.role);
+    return { user, accessToken };
   }
 
   async refreshToken(userId: number, token: string) {
-    const user = await db.User.findOne({
-      where: { id: userId, refreshToken: token },
-    });
-    if (!user) throw new Error("Token không hợp lệ");
-    return generateAccessToken(user.id, user.role);
+    return await this.userRepo.refreshToken(userId, token);
   }
 
   async forgotPassword(email: string) {
-    const user = await db.User.findOne({ where: { email } });
+    const user = await this.userRepo.findByEmail(email);
     if (!user) throw new Error("Tài khoản không tồn tại");
-    return await AuthService.createPasswordChangeToken(user.id);
+    return await this.userRepo.createPasswordChangeToken(user.id);
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const passwordResetToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
-    const user = await db.User.findOne({
-      where: {
-        resetPwdToken: passwordResetToken,
-        // resetPwdExpires: { [Op.gt]: Date.now() },
-      },
-    });
-    if (!user) throw new Error("Token không hợp lệ");
-    if (user.resetPwdExpires && user.resetPwdExpires < new Date()) {
-      user.resetPwdToken = null;
-      user.resetPwdExpires = null;
-      await user.save();
-      throw new Error("Token đã hết hạn");
-    }
-    user.password = AuthService.hashPassword(newPassword);
-    user.resetPwdToken = "";
-    user.resetPwdExpires = null;
-    user.passwordChangedAt = new Date();
-    return await user.save();
+    return await this.userRepo.resetPassword(token, newPassword);
   }
 
   async sendMail(data: MailJobData) {

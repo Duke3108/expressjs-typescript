@@ -8,65 +8,19 @@ import { AuthService } from "../services/auth.service.ts";
 export class UserController {
   constructor(@inject("UserService") private userService: UserService) {}
 
-  //test
-  getUserByIdTest = asyncHandler(async (req, res) => {
-    const user = await this.userService.getUserByIdTest(Number(req.params.uid));
-    res.json({
-      success: true,
-      user,
-    });
-  });
-
-  getUserByEmailTest = asyncHandler(async (req, res) => {
-    const user = await this.userService.getUserByEmailTest(
-      req.params.email ?? ""
-    );
-    res.json({
-      success: true,
-      user,
-    });
-  });
-
-  getAllUsersTest = asyncHandler(async (req, res) => {
-    const users = await this.userService.getUsersTest();
-    res.status(200).json({
-      success: true,
-      users,
-    });
-  });
-
-  createUserTest = asyncHandler(async (req, res) => {
-    const { email, password, fullname, phone } = req.body;
-    if (!email || !password || !fullname || !phone)
-      throw new Error("Missing inputs");
-    const response = await this.userService.createUserTest({
-      email,
-      password: await AuthService.hashPassword(password),
-      fullname,
-      phone,
-    });
-
-    res.status(200).json({
-      success: response ? true : false,
-      createdUser: response ? response : "Tạo tài khoản thất bại",
-    });
-    return;
-  });
-
-  //code chinh
   getUserById = asyncHandler(async (req, res) => {
     const user = await this.userService.getUserProfile(Number(req.params.uid));
     res.json({
       success: true,
-      user,
+      msg: user ? user : "Không tìm thấy người dùng",
     });
   });
 
   getAllUsers = asyncHandler(async (req, res) => {
-    const { users, count } = await this.userService.getAllUsers(req.query);
+    const users = await this.userService.getAllUsers();
     res.status(200).json({
       success: true,
-      counts: count,
+      msg: "Lấy danh sách người dùng thành công",
       users,
     });
   });
@@ -91,22 +45,20 @@ export class UserController {
 
   updateUser = asyncHandler(async (req, res) => {
     const { uid } = req.params;
-    const response = await this.userService.updateUser(Number(uid), req.body);
+    await this.userService.updateUser(Number(uid), req.body);
     res.status(200).json({
-      success: response ? true : false,
-      mes: response
-        ? "Cập nhật người dùng thành công"
-        : "Cập nhật người dùng thất bại",
+      success: true,
+      msg: "Cập nhật người dùng thành công",
     });
     return;
   });
 
   deleteUser = asyncHandler(async (req, res) => {
     const { uid } = req.params;
-    const response = await this.userService.deleteUser(Number(uid));
+    await this.userService.deleteUser(Number(uid));
     res.status(200).json({
-      success: response ? true : false,
-      mes: response ? `Đã xóa tài khoản id: ${uid}` : "Xóa tài khoản thất bại",
+      success: true,
+      msg: `Đã xóa tài khoản id: ${uid}`,
     });
   });
 }

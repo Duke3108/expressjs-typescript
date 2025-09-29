@@ -10,27 +10,7 @@ class UserRoutes {
   constructor() {
     this.router = Router();
     this.userController = container.resolve(UserController);
-    //this.initializeRoutes();
-    this.testRoutes();
-  }
-
-  private testRoutes() {
-    this.router.get(
-      "/test/:uid",
-      this.userController.getUserByIdTest.bind(this.userController)
-    );
-    this.router.get(
-      "/test/email/:email",
-      this.userController.getUserByEmailTest.bind(this.userController)
-    );
-    this.router.get(
-      "/test",
-      this.userController.getAllUsersTest.bind(this.userController)
-    );
-    this.router.post(
-      "/test",
-      this.userController.createUserTest.bind(this.userController)
-    );
+    this.initializeRoutes();
   }
 
   private initializeRoutes() {

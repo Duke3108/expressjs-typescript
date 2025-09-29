@@ -41,9 +41,8 @@ export const isAdmin = asyncHandler(
     if (+role !== 3108)
       res.status(401).json({
         success: false,
-        mes: "Require admin role",
+        msg: "Require admin role",
       });
-    ``;
     next();
   }
 );

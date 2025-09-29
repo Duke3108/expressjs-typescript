@@ -6,6 +6,7 @@ import {
   type FindManyOptions,
   type FindOneOptions,
   type FindOptionsOrder,
+  type FindOptionsSelect,
   type FindOptionsWhere,
   type ObjectLiteral,
 } from "typeorm";
@@ -15,20 +16,6 @@ export class GenericRepository<T extends ObjectLiteral> {
 
   constructor(entity: EntityTarget<T>, private manager: EntityManager) {
     this.repository = this.manager.getRepository(entity);
-  }
-
-  //test
-  async createTest(data: DeepPartial<T>): Promise<T> {
-    const entity = this.repository.create(data);
-    return await this.repository.save(entity);
-  }
-
-  async findAllTest(): Promise<T[]> {
-    return await this.repository.find();
-  }
-
-  async findByIdTest(id: number): Promise<T | null> {
-    return await this.repository.findOneBy({ id } as any);
   }
 
   //code mau
@@ -53,11 +40,16 @@ export class GenericRepository<T extends ObjectLiteral> {
     });
   }
 
-  public async findById(id: string, relations?: string[]): Promise<T | null> {
+  public async findById(
+    id: number | string,
+    select?: string[],
+    relations?: string[]
+  ): Promise<T | null> {
     return await this.repository.findOne({
       where: { id } as any,
       withDeleted: false,
       relations: relations as string[],
+      select: select as string[],
     });
   }
 
@@ -65,7 +57,7 @@ export class GenericRepository<T extends ObjectLiteral> {
     return await this.repository.findOne(options);
   }
 
-  public async find(options: FindManyOptions<T>): Promise<T[]> {
+  public async find(options?: FindManyOptions<T>): Promise<T[]> {
     return await this.repository.find(options);
   }
 
@@ -74,17 +66,11 @@ export class GenericRepository<T extends ObjectLiteral> {
     return await this.repository.save(entity);
   }
 
-  public async update(
-    id: string,
-    data: Partial<T>,
-    msg: string
-  ): Promise<void> {
-    const entity = await this.findById(id);
-    if (!entity) throw new Error(msg);
+  public async update(id: number | string, data: Partial<T>): Promise<void> {
     await this.repository.update(id, data);
   }
 
-  public async delete(id: string, msg: string): Promise<void> {
+  public async delete(id: number | string, msg: string): Promise<void> {
     const entity = await this.findById(id);
     if (!entity) throw new Error(msg);
     await this.repository.delete(id);

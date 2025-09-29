@@ -1,5 +1,4 @@
 import asyncHandler from "express-async-handler";
-import { generateAccessToken } from "../middlewares/jwt.ts";
 import makeToken from "uniqid";
 import "dotenv/config";
 import { inject, injectable } from "tsyringe";
@@ -57,9 +56,7 @@ export class AuthController {
       return;
     }
 
-    const user = await this.authService.login(email, password);
-    //tao access token
-    const accessToken = generateAccessToken(user.id, user.role);
+    const { accessToken } = await this.authService.login(email, password);
 
     res.status(200).json({
       success: true,

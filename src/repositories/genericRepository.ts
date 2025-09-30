@@ -66,7 +66,7 @@ export class GenericRepository<T extends ObjectLiteral> {
     return await this.repository.save(entity);
   }
 
-  public async update(id: number | string, data: Partial<T>): Promise<void> {
+  public async update(id: number, data: Partial<T>): Promise<void> {
     await this.repository.update(id, data);
   }
 

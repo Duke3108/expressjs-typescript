@@ -1,6 +1,7 @@
 npm init -y
 npm i nodemon express dotenv cors express-async-handler jsonwebtoken mongoose bcrypt
 Redis phải chạy trước (Docker: docker run -p 6379:6379 --name redis -d redis redis-server --requirepass 123456)
+npx typeorm migration:generate -d src/data-source.ts src/migrations
 
 Chạy app chính (Express) → producer hoạt động khi có request.
 

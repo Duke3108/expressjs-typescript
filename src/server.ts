@@ -6,7 +6,7 @@ dotenv.config();
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import RouteInitializer from "./routes/index.ts";
-import { initializeDB } from "./data-source.ts";
+import AppDataSource from "./data-source.ts";
 
 const app = express();
 const PORT = process.env.PORT || 8888;
@@ -22,6 +22,14 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const initializeDB = async () => {
+  try {
+    await AppDataSource.initialize();
+    console.log("Connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+};
 initializeDB();
 
 const routes = new RouteInitializer(app);

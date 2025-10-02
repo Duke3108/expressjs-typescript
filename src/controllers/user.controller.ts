@@ -1,8 +1,8 @@
 import asyncHandler from "express-async-handler";
 import "dotenv/config";
 import { injectable, inject } from "tsyringe";
-import { UserService } from "../services/user.service.ts";
-import { AuthService } from "../services/auth.service.ts";
+import { UserService } from "../services/user.service.js";
+import { AuthService } from "../services/auth.service.js";
 
 @injectable()
 export class UserController {

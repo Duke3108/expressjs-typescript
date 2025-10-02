@@ -1,12 +1,12 @@
 import "reflect-metadata";
 import express from "express";
-import "./container.ts";
+import "./container.js";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import RouteInitializer from "./routes/index.ts";
-import AppDataSource from "./data-source.ts";
+import RouteInitializer from "./routes/index.js";
+import AppDataSource from "./data-source.js";
 
 const app = express();
 const PORT = process.env.PORT || 8888;

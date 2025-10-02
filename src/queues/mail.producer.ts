@@ -1,4 +1,4 @@
-import mailQueue from "./mail.queue.ts";
+import mailQueue from "./mail.queue.js";
 
 export type MailJobData = {
   email: string;

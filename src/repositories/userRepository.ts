@@ -1,8 +1,7 @@
 import { injectable } from "tsyringe";
-import { User } from "../entity/User.ts";
-import { GenericRepository } from "./genericRepository.ts";
-import AppDataSource from "../data-source.ts";
-import { AuthService } from "../services/auth.service.ts";
+import { User } from "../entity/User.js";
+import { GenericRepository } from "./genericRepository.js";
+import AppDataSource from "../data-source.js";
 
 @injectable()
 export class UserRepository extends GenericRepository<User> {

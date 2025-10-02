@@ -2,7 +2,7 @@
   "name": "ts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
@@ -24,13 +24,14 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && nodemon dist/server.js",
+    "start": "tsc && node dist/server.js",
     "mq": "node dist/queues/mail.worker.js",
     "mock": "concurrently \"npm run mq\" \"npm start\"",
     "dev": "tsx watch src/server.ts",
     "devv": "concurrently \"npm run mq\" \"npm run dev\"",
-    "typeorm": "tsx && npx typeorm -d dist/config/data-source.config.js",
-    "migration": "typeorm migration:generate src/migrations/Init -d dist/data-source.js"
+    "typeorm": "tsc && ts-node ./node_modules/typeorm/cli",
+    "migration:run": "npm run typeorm migration:run -- -d ./dist/data-source.js",
+    "migration:generate": "npm run typeorm -- -d ./dist/data-source.js migration:generate"
   },
   "type": "module",
   "keywords": [],

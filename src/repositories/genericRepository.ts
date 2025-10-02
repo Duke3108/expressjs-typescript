@@ -6,7 +6,6 @@ import {
   type FindManyOptions,
   type FindOneOptions,
   type FindOptionsOrder,
-  type FindOptionsSelect,
   type FindOptionsWhere,
   type ObjectLiteral,
 } from "typeorm";

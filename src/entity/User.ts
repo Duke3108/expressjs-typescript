@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from "typeorm";
-import { enumData } from "../utils/constant.ts";
+import { enumData } from "../utils/constant.js";
 
 @Entity("Users")
 export class User {

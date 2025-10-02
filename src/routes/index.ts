@@ -1,7 +1,7 @@
 import type { Application } from "express";
-import authRoutes from "./auth.route.ts";
-import { errorHandler, notFound } from "../middlewares/error-handler.ts";
-import userRoutes from "./user.route.ts";
+import authRoutes from "./auth.route.js";
+import { errorHandler, notFound } from "../middlewares/error-handler.js";
+import userRoutes from "./user.route.js";
 
 class RouteInitializer {
   constructor(private app: Application) {}

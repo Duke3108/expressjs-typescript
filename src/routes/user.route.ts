@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { container } from "tsyringe";
-import { UserController } from "../controllers/user.controller.ts";
-import { isAdmin, verifyToken } from "../middlewares/verify-token.ts";
+import { UserController } from "../controllers/user.controller.js";
+import { isAdmin, verifyToken } from "../middlewares/verify-token.js";
 
 class UserRoutes {
   public router: Router;

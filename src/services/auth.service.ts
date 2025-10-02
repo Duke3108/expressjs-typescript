@@ -1,13 +1,13 @@
 import { inject, injectable } from "tsyringe";
-import addMailJob, { type MailJobData } from "../queues/mail.producer.ts";
+import addMailJob, { type MailJobData } from "../queues/mail.producer.js";
 import "dotenv/config";
 import brcypt from "bcryptjs";
 import {
   generateAccessToken,
   generateRefreshToken,
-} from "../middlewares/jwt.ts";
-import { UserRepository } from "../repositories/userRepository.ts";
-import type { UserData } from "./user.service.ts";
+} from "../middlewares/jwt.js";
+import { UserRepository } from "../repositories/userRepository.js";
+import type { UserData } from "./user.service.js";
 import crypto from "crypto";
 
 type UserRegisterData = UserData & {

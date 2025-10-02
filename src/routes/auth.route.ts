@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { container } from "tsyringe";
-import { AuthController } from "../controllers/auth.controller.ts";
+import { AuthController } from "../controllers/auth.controller.js";
 
 class AuthRoutes {
   public router: Router;

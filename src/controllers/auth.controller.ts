@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import makeToken from "uniqid";
 import "dotenv/config";
 import { inject, injectable } from "tsyringe";
-import { AuthService } from "../services/auth.service.ts";
+import { AuthService } from "../services/auth.service.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 @injectable()
@@ -106,13 +106,11 @@ export class AuthController {
     const { newPassword, token } = req.body;
     if (!newPassword) throw new Error("Vui lòng nhập mật khẩu mới");
     if (!token) throw new Error("Vui lòng nhập mã xác nhận");
-    const user = await this.authService.resetPassword(token, newPassword);
+    await this.authService.resetPassword(token, newPassword);
 
     res.status(200).json({
-      success: user ? true : false,
-      msg: user
-        ? "Cập nhật mật khẩu thành công, vui lòng đăng nhập lại"
-        : "Cập nhật mật khẩu thất bại",
+      success: true,
+      msg: "Cập nhật mật khẩu thành công, vui lòng đăng nhập lại",
     });
   });
 }

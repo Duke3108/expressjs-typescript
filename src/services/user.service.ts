@@ -1,5 +1,5 @@
 import { inject, injectable } from "tsyringe";
-import { UserRepository } from "../repositories/userRepository.ts";
+import { UserRepository } from "../repositories/userRepository.js";
 
 export type UserData = {
   email: string;
